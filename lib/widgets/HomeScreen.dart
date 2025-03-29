@@ -12,18 +12,30 @@ class Homescreen extends StatelessWidget {
       appBar: AppBar(title: Text("Todo List")),
       body: Container(
         padding: EdgeInsets.only(left: 15, right: 15),
-        child: BlocProvider<TodoBloc>(
+        child: BlocProvider(
           create: (BuildContext context) => TodoBloc(),
           child: BlocBuilder<TodoBloc, TodoState>(
             builder: (BuildContext context, state) {
               return Column(
                 children: [
                   _Search(),
+                  _FilterDropdown(),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: state.todos.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        return _Todo_item(title: state.todos[index].title);
+                    child: BlocBuilder<TodoBloc, TodoState>(
+                      builder: (context, state) {
+                        if (state.filteredTodos.isEmpty) {
+                          return Center(child: Text("Немає завдань"));
+                        }
+
+                        return ListView.builder(
+                          itemCount: state.filteredTodos.length,
+                          itemBuilder: (context, index) {
+                            return _TodoItem(
+                              todo: state.filteredTodos[index],
+                              index: index,
+                            );
+                          },
+                        );
                       },
                     ),
                   ),
@@ -37,20 +49,52 @@ class Homescreen extends StatelessWidget {
   }
 }
 
-class _Todo_item extends StatelessWidget {
-  final String title;
-  const _Todo_item({super.key, required this.title});
+class _FilterDropdown extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: BlocBuilder<TodoBloc, TodoState>(
+        builder: (context, state) {
+          return DropdownButton<TodoFilter>(
+            value: state.filter,
+            onChanged: (filter) {
+              if (filter != null) {
+                context.read<TodoBloc>().add(SetFilter(filter));
+              }
+            },
+            items: const [
+              DropdownMenuItem(value: TodoFilter.all, child: Text("Всі")),
+              DropdownMenuItem(
+                value: TodoFilter.completed,
+                child: Text("Виконані"),
+              ),
+              DropdownMenuItem(
+                value: TodoFilter.pending,
+                child: Text("Невиконані"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TodoItem extends StatelessWidget {
+  final Todo todo;
+  final int index;
+
+  const _TodoItem({super.key, required this.todo, required this.index});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(10),
-      margin: EdgeInsets.only(top: 15),
+      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(top: 15),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.blueAccent),
-        borderRadius: BorderRadius.all(
-          Radius.circular(15), //                 <--- border radius here
-        ),
+        borderRadius: BorderRadius.circular(15),
       ),
       width: double.infinity,
       height: 70,
@@ -62,13 +106,33 @@ class _Todo_item extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                todo.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
-              Text("Short description"),
+              SizedBox(width: 280, child: Text(todo.description, maxLines: 1)),
             ],
           ),
-          Icon(Icons.delete),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () {
+              context.read<TodoBloc>().add(RemoveTodo(index));
+            },
+          ),
+          IconButton(
+            icon:
+                todo.isDone
+                    ? Icon(Icons.check_box, color: Colors.red)
+                    : Icon(
+                      Icons.check_box_outline_blank,
+                      color: const Color.fromARGB(255, 53, 9, 215),
+                    ),
+            onPressed: () {
+              context.read<TodoBloc>().add(ToggleTodoDone(index));
+            },
+          ),
         ],
       ),
     );

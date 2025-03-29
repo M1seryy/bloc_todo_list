@@ -7,16 +7,16 @@ class Todo {
   final String title;
   final String category;
   final String description;
+  final bool isDone;
 
   Todo({
     required this.title,
     required this.category,
     required this.description,
+    this.isDone = false,
   });
 
-  // Десеріалізація (з JSON в модель)
   factory Todo.fromJson(Map<String, dynamic> json) => _$TodoFromJson(json);
 
-  // Серіалізація (з моделі в JSON)
   Map<String, dynamic> toJson() => _$TodoToJson(this);
 }
