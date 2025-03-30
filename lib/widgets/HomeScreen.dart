@@ -1,5 +1,6 @@
 import 'package:bloc_todo_list/bloc/todo_bloc.dart';
 import 'package:bloc_todo_list/entity/todo_model.dart';
+import 'package:bloc_todo_list/widgets/AddTodoScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,6 +21,7 @@ class Homescreen extends StatelessWidget {
                 children: [
                   _Search(),
                   _FilterDropdown(),
+                  _CategoryDropdown(),
                   Expanded(
                     child: BlocBuilder<TodoBloc, TodoState>(
                       builder: (context, state) {
@@ -38,6 +40,16 @@ class Homescreen extends StatelessWidget {
                         );
                       },
                     ),
+                  ),
+                  FloatingActionButton(
+                    onPressed:
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddTodoScreen(),
+                          ),
+                        ),
+                    child: Icon(Icons.add),
                   ),
                 ],
               );
@@ -134,6 +146,35 @@ class _TodoItem extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryDropdown extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: BlocBuilder<TodoBloc, TodoState>(
+        builder: (context, state) {
+          return DropdownButton<String?>(
+            value: state.categoryFilter,
+            hint: Text("Оберіть категорію"),
+            onChanged: (category) {
+              context.read<TodoBloc>().add(SetCategoryFilter(category));
+            },
+            items: [
+              DropdownMenuItem(value: null, child: Text("Всі категорії")),
+              DropdownMenuItem(value: "Робота", child: Text("Робота")),
+              DropdownMenuItem(
+                value: "Саморозвиток",
+                child: Text("Саморозвиток"),
+              ),
+              DropdownMenuItem(value: "Покупки", child: Text("Покупки")),
+            ],
+          );
+        },
       ),
     );
   }
